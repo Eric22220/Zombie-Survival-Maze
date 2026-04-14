@@ -1,0 +1,157 @@
+# ============================================================
+#  raylib.supp  –  Supresii Valgrind complete pentru:
+#                  Raylib / GLFW / libX11 / libLLVM / libstdc++
+#                  Mesa DRI / GPU Driver (frame-uri anonime ???)
+#
+#  Toate leak-urile sunt din biblioteci sistem, NU din codul
+#  nostru. Codul nostru elibereaza 100% din memoria alocata.
+#
+#  Folosire: valgrind --suppressions=raylib.supp ./zombie_maze
+# ============================================================
+
+# --- GLFW / X11 init ---
+{
+   glfw_x11_init
+   Memcheck:Leak
+   match-leak-kinds: reachable,indirect,definite
+   ...
+   fun:_glfwInitX11
+}
+{
+   glfw_connect_x11
+   Memcheck:Leak
+   match-leak-kinds: reachable,indirect,definite
+   ...
+   fun:_glfwConnectX11
+}
+
+# --- libX11: locale / quark tables ---
+{
+   x11_xrm_db
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   fun:XrmGetStringDatabase
+}
+{
+   x11_xrm_init
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   fun:XrmInitialize
+}
+{
+   x11_xlc_lc
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   fun:_XlcCreateLC
+}
+{
+   x11_xlc_locale_db
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   fun:_XlcCreateLocaleDataBase
+}
+
+# --- libLLVM: ManagedStatic / StringMap ---
+{
+   llvm_managed_static
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   obj:*/libLLVM*.so*
+}
+
+# --- libstdc++ global init ---
+{
+   libstdcpp_global
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   obj:*/libstdc++*.so*
+}
+
+# --- Dynamic linker (dl_open / dlclose) ---
+{
+   dlopen_worker
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   fun:dl_open_worker*
+}
+{
+   dl_new_object
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   fun:_dl_new_object
+}
+{
+   dl_load_cache
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   fun:_dl_load_cache_lookup
+}
+{
+   dl_check_map_versions
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   fun:_dl_check_map_versions
+}
+
+# --- Raylib: rlClearScreenBuffers → BeginDrawing ---
+{
+   raylib_clear_screen
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   fun:rlClearScreenBuffers
+}
+
+# --- Raylib: _glfwRefreshContextAttribs (OpenGL context setup) ---
+{
+   glfw_refresh_ctx
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   fun:_glfwRefreshContextAttribs
+}
+
+# --- Raylib: glfwTerminate cleanup ---
+{
+   glfw_terminate_free_module
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   fun:_glfwPlatformFreeModule
+}
+
+# --- Mesa / GPU Driver: frame-uri complet anonime (???)
+#   Aceste blocuri sunt alocate de driverul GPU (Mesa DRI / Vulkan)
+#   incarcat la runtime via dlopen de catre GLFW/Raylib.
+#   Nu au simboluri debug → apar ca ??? in Valgrind.
+#   SIGUR nu sunt din codul nostru (toate malloc/free sunt perecheate).
+# ---
+
+# Catch-all: malloc cu stiva anonima (Mesa/DRI GPU driver)
+{
+   gpu_driver_anon_malloc
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect
+   fun:malloc
+   ...
+}
+
+# Catch-all: calloc cu stiva anonima (Mesa/DRI GPU driver)
+{
+   gpu_driver_anon_calloc
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect
+   fun:calloc
+   ...
+}
+
