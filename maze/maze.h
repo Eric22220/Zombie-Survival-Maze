@@ -3,6 +3,11 @@
 
 /* ============================================================
  *  maze/maze.h  –  Structura labirintului generat procedural
+ *
+ *  Spre deosebire de versiunea initiala, numarul de chei si
+ *  dimensiunea labirintului sunt acum variabile per nivel.
+ *  keys[] are dimensiune fixa MAX_KEYS — campul num_keys spune
+ *  cate sunt efectiv folosite (primele num_keys sloturi).
  * ============================================================ */
 
 #include "core.h"
@@ -10,18 +15,26 @@
 typedef struct {
     int   rows;
     int   cols;
-    int **grid;             /* 0 = WALL, 1 = FLOOR  (alocat cu malloc) */
-    Vec2i start;            /* pozitia de start a jucatorului           */
-    Vec2i exit;             /* pozitia iesirii                          */
-    Vec2i keys[NUM_KEYS];   /* pozitiile cheilor de colectat            */
+    int **grid;                 /* 0 = WALL, 1 = FLOOR (alocat cu malloc) */
+    Vec2i start;                /* pozitia de start a jucatorului          */
+    Vec2i exit;                 /* pozitia iesirii                         */
+    int   num_keys;             /* cate chei sunt active (pana la MAX_KEYS)*/
+    Vec2i keys[MAX_KEYS];       /* pozitiile cheilor (primele num_keys)    */
 } Maze;
 
-/* Aloca un labirint gol (toate peretii) */
+/* Aloca un labirint gol (toate peretii) cu dimensiunile date.
+   rows si cols TREBUIE sa fie impare. */
 Maze *maze_new(int rows, int cols);
 
-/* Genereaza labirintul cu Recursive Backtracking (DFS)
-   seed = numar pentru srand(), schimba labirintul la fiecare pornire */
-void  maze_generate(Maze *m, unsigned int seed);
+/* Genereaza labirintul cu Recursive Backtracking si plaseaza num_keys chei.
+   seed = numar pentru srand(), schimba layout-ul la fiecare apel. */
+void  maze_generate(Maze *m, unsigned int seed, int num_keys);
+
+/* Sparge num_loops pereti "interiori" (cu floor pe parti opuse).
+   Transforma labirintul perfect (drum unic) intr-unul cu multiple drumuri,
+   astfel incat jucatorul poate fugi de zombi pe rute alternative.
+   Apeleaza-l DUPA maze_generate. */
+void  maze_add_loops(Maze *m, int num_loops);
 
 /* Elibereaza toata memoria alocata */
 void  maze_free(Maze *m);

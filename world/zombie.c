@@ -1,9 +1,9 @@
 /* ============================================================
  *  world/zombie.c  –  Logica de miscare a zombie-ului
  *
- *  La fiecare ZOMBIE_SPEED secunde, zombie-ul calculeaza
- *  urmatorul pas spre jucator folosind BFS din pathfinder.c
- *  si isi actualizeaza pozitia cu acel pas.
+ *  La fiecare zombie_speed secunde, zombie-ul calculeaza
+ *  urmatorul pas spre jucator folosind BFS din pathfinder.c.
+ *  Daca e frozen (power-up FREEZE activ), nu se misca deloc.
  * ============================================================ */
 
 #include "world/zombie.h"
@@ -11,20 +11,24 @@
 
 void zombie_init(Zombie *z, Vec2i pos) {
     z->pos        = pos;
+    z->spawn      = pos;
     z->alive      = 1;
     z->move_timer = 0.0f;
 }
 
-void zombie_update(Zombie *z, const Maze *m, Vec2i player_pos, float dt) {
-    if (!z->alive) return;
+void zombie_update(Zombie *z, const Maze *m, Vec2i player_pos,
+                   float dt, float zombie_speed, int frozen)
+{
+    if (!z->alive)  return;
+    if (frozen) {
+        /* Cand e inghet, oprim si timer-ul, ca sa nu se miste "pe loc"
+           imediat ce expira power-up-ul. */
+        return;
+    }
 
     z->move_timer += dt;
-
-    /* Zombie-ul se muta doar cand timer-ul depaseste pragul */
-    if (z->move_timer >= ZOMBIE_SPEED) {
+    if (z->move_timer >= zombie_speed) {
         z->move_timer = 0.0f;
-
-        /* Apelam BFS: gaseste urmatorul cel mai bun pas spre jucator */
         z->pos = bfs_next_step(m, z->pos, player_pos);
     }
 }
