@@ -3,30 +3,46 @@
 
 /* ============================================================
  *  gfx/renderer.h  –  Declaratii pentru toate functiile de desen
- *  Foloseste Raylib: DrawRectangle, DrawCircle, DrawText, etc.
+ *
+ *  Fereastra are dimensiunea MAX (31x31 * TILE_SIZE + HUD_HEIGHT).
+ *  Labirintele mai mici sunt CENTRATE in fereastra cu offset.
  * ============================================================ */
 
 #include "core.h"
 #include "maze/maze.h"
 #include "world/player.h"
 #include "world/zombie.h"
+#include "world/powerup.h"
+#include "world/level.h"
+#include "save.h"
 
-/* Deseneaza grila labirintului (pereti + podea) si cheile inca vii */
-void render_maze(const Maze *m, const int keys_alive[NUM_KEYS]);
+/* --- Offset pentru centrare orizontala/verticala a labirintului --- */
+int  maze_offset_x(const Maze *m);
+int  maze_offset_y(const Maze *m);
 
-/* Deseneaza celula de iesire (gri = blocat, verde = deblocat) */
-void render_exit(Vec2i exit_pos, int unlocked);
+/* --- Randere de scena ---
+ * Toate folosesc m + offsets pentru a desena la pozitia corecta. */
 
-/* Deseneaza jucatorul (cu efect de blink cand e invincibil) */
-void render_player(const Player *p);
+void render_maze    (const Maze *m, const int keys_alive[MAX_KEYS]);
+void render_exit    (const Maze *m, Vec2i exit_pos, int unlocked);
+void render_player  (const Maze *m, const Player *p);
+void render_zombies (const Maze *m, const Zombie *zombies, int count);
+void render_powerups(const Maze *m, const Powerup *pus, int count);
 
-/* Deseneaza toti zombie-ii activi */
-void render_zombies(const Zombie *zombies, int count);
+/* HUD-ul de jos (HP, chei, nivel, power-uri active cu timer) */
+void render_hud(const Player *p, const LevelConfig *cfg,
+                float freeze_timer, float kill_all_timer);
 
-/* Deseneaza bara HUD de jos (HP, chei, hint taste) */
-void render_hud(const Player *p, int total_keys);
+/* --- Ecrane full-screen --- */
 
-/* Deseneaza ecranul de overlay (meniu, victorie, game-over) */
-void render_overlay(GameState state);
+/* Meniul de start (STATE_MENU) */
+void render_menu(void);
+
+/* Lobby cu nivelele 1-10 (STATE_LEVEL_SELECT)
+   cursor = nivelul evidentiat curent (1..MAX_LEVELS) */
+void render_level_select(const SaveData *s, int cursor);
+
+/* Overlay "Nivel completat" / "Game over" / "Felicitari" */
+void render_overlay(GameState state, int current_level);
 
 #endif /* RENDERER_H */
